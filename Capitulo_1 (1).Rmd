@@ -1,0 +1,222 @@
+---
+title: "1. Datos, Modelos y Software. Ejercicios"
+date: "Enero 2025"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 1
+    theme: cerulean
+---
+
+
+<style>
+body {
+text-align: justify}
+</style>
+
+<style type="text/css">
+body{/*Normal*/
+     font-size: 20px;
+}
+</style>
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+library(tidyverse)
+library(discrtr) # A companion package for the book Introduction to Discrete Choice Analysis with `R`
+library(mlogit) # Multinomial Logit Models
+library(readr) # Read Rectangular Text Data
+library(plotly)
+```
+
+## EJERCICIO 1
+
+# Gabriel Omar Maya Briseño
+
+Invoke data set Mode from package mlogit. To do this you need to first load the package. This is a data set with choices about mode of transportation. This is done as follows:
+
+```{r}
+data("Mode")
+```
+
+Once you have loaded the data set, answer the following questions:
+Describe this data set. How many variables are there and of which type (i.e., categorical/quantitative)?
+
+```{r}
+glimpse(Mode)
+```
+
+
+
+
+
+How many different modes of transportation are in this data set? What is the most popular mode? What is the least popular mode?
+
+```{r}
+summary(Mode)
+```
+```{r}
+ggplot(Mode)+
+  geom_bar(aes(choice, fill=choice), color="black", show.legend = FALSE)+
+  theme_bw()
+```
+
+
+In general, what is the most expensive mode? The least expensive?
+
+
+```{r}
+ggplot(Mode)+
+  geom_density(aes(cost.car, fill="car"), color="black", alpha=0.5)+
+  geom_density(aes(cost.carpool , fill="carpool"), color="black", alpha=0.5)+
+  geom_density(aes(cost.bus, fill="bus"), color="black", alpha=0.5)+
+  geom_density(aes(cost.rail, fill="rail"), color="black", alpha=0.5)+
+  scale_fill_manual(values=c("car"= "firebrick", "carpool"="dodgerblue", "bus"="darkgoldenrod2", "rail"="cyan"), name="Mode")+
+  xlab("Cost")+
+theme_bw()
+  
+```
+
+
+
+Create a plot showing the univariate distributions of time by car and time by bus. Discuss.
+
+
+```{r}
+grafica_time <- ggplot(Mode)+
+  geom_density(aes(time.car, fill="car"), color="black", alpha=0.5)+
+  geom_density(aes(time.carpool , fill="carpool"), color="black", alpha=0.5)+
+  geom_density(aes(time.bus, fill="bus"), color="black", alpha=0.5)+
+  geom_density(aes(time.rail, fill="rail"), color="black", alpha=0.5)+
+  scale_fill_manual(values=c("car"= "firebrick", "carpool"="dodgerblue", "bus"="darkgoldenrod2", "rail"="cyan"), name="Mode")+
+  xlab("Time")+
+theme_bw()
+
+
+ggplotly(grafica_time)  
+```
+
+How do choices relate to cost by the different modes?
+
+```{r}
+varnum <- Mode |> dplyr::select(where(is.numeric))
+varnum <- names(varnum)
+
+for (var in varnum) {
+grafica_box <- ggplot(Mode)+
+  geom_boxplot(aes(choice, eval(as.name(var)), fill=choice), show.legend=FALSE)+
+  ylab(var)+
+  theme_bw()
+  
+  print(grafica_box)
+    
+}
+
+
+
+```
+
+## CAPITULO 1
+
+Importacion de datos
+
+```{r}
+# Read a csv file data and name the object
+mc_mode_choice <-  read_csv(system.file("extdata", "mc_commute.csv", package = "discrtr"), show_col_types = FALSE)
+head(mc_mode_choice)
+```
+
+También es conveniente mostrar las variables (y su respectiva clase)
+
+```{r}
+glimpse(mc_mode_choice)
+
+```
+Clase de datos en R
+```{r}
+mc_mode_choice$choice[1]-mc_mode_choice$choice[4]
+```
+Convercion de una variable a un factor
+```{r}
+mc_mode_choice$choice <-  factor(mc_mode_choice$choice, 
+                                 labels = c("Cycle", "Walk", "HSR", "Car"))
+```
+
+```{r}
+summary(mc_mode_choice$choice)
+```
+Duracion en un viaje en bicicleta
+```{r}
+summary(mc_mode_choice$timecycle)
+```
+Duracion Promedio de un viaje en bicicleta
+
+```{r}
+time.Active.clean <- mc_mode_choice |> dplyr::select(timecycle, timewalk) |> 
+                     filter(timecycle!=100000 & timewalk!=100000)
+```
+```{r}
+summary(time.Active.clean)
+```
+costo/duracion de un ir caminando o en bicleta
+```{r}
+ggplot(data = time.Active.clean) +
+  geom_area(aes(x = timecycle), stat = "bin", binwidth = 5, fill = "blue", color = "black", alpha = 0.6) +
+  geom_area(aes(x = timewalk), stat = "bin", binwidth = 5, fill = "yellow", color = "black", alpha = 0.6) +
+  xlab("Tiempo (minutos)")
+```
+La densidad de acera está medida en km/km^2
+A continuación crearemos el diagrama de caja. Comenzamos definiendo un objeto ggplot2, en este caso, queremos trazar la variable categórica en el eje x y la variable cuantitativa en el eje y:
+```{r}
+mc_mode_choice |> select(c("choice", "side_den")) |> summary()
+```
+
+```{r}
+ggplot(mc_mode_choice)+
+  geom_boxplot(aes(choice, side_den))
+```
+
+## PREGUNTA 4-8
+4.	Describe this data set. How many variables are there and of which type (i.e., categorical/quantitative)?
+
+Hay 4 variables que es carro, caminar, compartir el carro y tren, de las cuales se hicieron 39 entrevistas
+
+5.	How many different modesof transportation are in this data set? What is the most popular mode? What is the least popular mode?
+
+Son 4 diferentes y el mas popular es compartir el carro y el menos popular es el tren
+
+6.	Ingeneral, what is the most expensive mode? The least  expensive?
+
+El mas caro es el carro y el menos caro es el camion
+
+7.	Create a plot showing the univariatedistributions of time by car and time by bus. Discuss.
+
+```{r}
+grafica_time <- ggplot(Mode)+
+  geom_density(aes(time.car, fill="car"), color="black", alpha=0.5)+
+  geom_density(aes(time.bus, fill="bus"), color="black", alpha=0.5)+
+  scale_fill_manual(values=c("car"= "firebrick", "bus"="darkgoldenrod2"), name="Mode")+
+  xlab("Time")+
+theme_bw()
+
+
+ggplotly(grafica_time)  
+```
+8.	How do choices relate to cost by the different modes?
+
+El mas caro es viajar en carro, se debe al uso de la gasolina , ademas de ser el menos denso
+El segundo mas caro es compartir carro, porque aunque la gasolina se puede dividie entre varias personas aun es mayor que los anteriores 
+el tren y el camion son muy similares, tienden a tener un precio mas accesible que el carro .
+
+
+## Conclusiones
+En este trabajo se realizó una exploración inicial de datos relacionados con las elecciones de modo de transporte, utilizando los paquetes mlogit, discrtr y herramientas de visualización como ggplot2 y plotly en R. A partir del análisis del conjunto de datos Mode, se identificaron las variables disponibles, su tipo (categóricas y cuantitativas), y se estudió la popularidad de las opciones de transporte, así como sus costos y tiempos asociados.
+
+Los resultados mostraron diferencias claras en los costos y tiempos entre los distintos modos de transporte, siendo el automóvil generalmente más costoso, mientras que modos como el autobús o el tren resultaron más accesibles económicamente. Los análisis gráficos, como las densidades y diagramas de caja, permitieron visualizar la distribución de variables clave y cómo se relacionan con la elección de transporte.
+
+Posteriormente, se trabajó con otro conjunto de datos (mc_commute.csv) para profundizar en el análisis de variables como la duración promedio de viajes en bicicleta y a pie, la distribución del tiempo de viaje, y la densidad de acera en diferentes modos de transporte. La conversión adecuada de variables categóricas y la limpieza de datos atípicos (como valores extremadamente altos) fueron pasos esenciales para lograr un análisis más preciso.
+
+En conjunto, este ejercicio permitió familiarizarse con el manejo de datos en R, la visualización efectiva y la interpretación de patrones de comportamiento de transporte, sentando bases importantes para estudios posteriores de análisis de elección discreta y modelado estadístico más avanzado.
